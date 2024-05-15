@@ -32,7 +32,7 @@ def deduplicate(data):
     for row in deduplicated_data.values():
         row['date'] = row['date'].strftime('%Y-%m-%d')
 
-    return deduplicated_data.values()
+    return list(deduplicated_data.values())
 
 def write_csv(file_path, data):
     base, ext = os.path.splitext(file_path)
