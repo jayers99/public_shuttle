@@ -2,7 +2,7 @@
 
 import csv
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 def import_csv(file_path):
@@ -34,6 +34,11 @@ def deduplicate(data):
 
     return list(deduplicated_data.values())
 
+def filter_recent(data, days=90):
+    cutoff_date = datetime.now() - timedelta(days=days)
+    recent_data = [row for row in data if datetime.strptime(row['date'], '%Y-%m-%d') >= cutoff_date]
+    return recent_data
+
 def write_csv(file_path, data):
     base, ext = os.path.splitext(file_path)
     new_file_path = f"{base}_clean{ext}"
@@ -61,7 +66,8 @@ def main():
     file_path = sys.argv[1]
     data = import_csv(file_path)
     deduplicated_data = deduplicate(data)
-    write_csv(file_path, deduplicated_data)
+    recent_data = filter_recent(deduplicated_data)
+    write_csv(file_path, recent_data)
 
 if __name__ == "__main__":
     main()
