@@ -38,11 +38,14 @@ def write_csv(file_path, data):
     base, ext = os.path.splitext(file_path)
     new_file_path = f"{base}_clean{ext}"
 
+    # Sort the data by date in ascending order
+    data.sort(key=lambda row: datetime.strptime(row['date'], '%Y-%m-%d'))
+
     # Extract field names from the first row of data
     if data:
         fieldnames = list(data[0].keys())
 
-    # Write the deduplicated data to a new CSV file
+    # Write the deduplicated and sorted data to a new CSV file
     with open(new_file_path, mode='w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
