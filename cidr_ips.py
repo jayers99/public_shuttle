@@ -1,8 +1,8 @@
 import ipaddress
 
-def expand_cidr_to_ips(input_string):
-    # Split the input string by newlines to process each line separately
-    lines = input_string.strip().split('\n')
+def extract_ips(input_string):
+    # Split the input string by lines, handling both \n and \r\n
+    lines = input_string.splitlines()
     result = []
 
     for line in lines:
@@ -18,10 +18,9 @@ def expand_cidr_to_ips(input_string):
             else:
                 # If it's a single address, just add it to the result
                 result.append(str(network.network_address))
-        except ValueError:
-            # If it's not a valid IP or CIDR, ignore the line (or handle error)
+        except ValueError as e:
+            # Print an error message for lines that cause ValueError
             print(f"Invalid IP or CIDR notation: {line} ({e})")
-            continue
 
     # Join the result list into a single string with newline separation
     return '\n'.join(result)
@@ -29,8 +28,11 @@ def expand_cidr_to_ips(input_string):
 # Example usage:
 input_data = """192.168.1.1
 192.168.1.0/30
-10.0.0.0/29
-172.16.5.4"""
+10.0.0.0/29\r
+172.16.5.4
+invalid_ip\r\n
+300.300.300.300/24"""
 
-expanded_ips = expand_cidr_to_ips(input_data)
+expanded_ips = extract_ips(input_data)
 print(expanded_ips)
+
