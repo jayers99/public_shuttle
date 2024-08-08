@@ -7,6 +7,9 @@ def extract_ips(input_string):
 
     for line in lines:
         line = line.strip()  # Remove any leading/trailing whitespace
+        if not line:  # Skip blank lines
+            continue
+
         try:
             # Try to parse the line as an IPv4 network
             network = ipaddress.ip_network(line, strict=False)
@@ -27,12 +30,16 @@ def extract_ips(input_string):
 
 # Example usage:
 input_data = """192.168.1.1
+
 192.168.1.0/30
 10.0.0.0/29\r
+
 172.16.5.4
 invalid_ip\r\n
-300.300.300.300/24"""
+300.300.300.300/24
+"""
 
 expanded_ips = extract_ips(input_data)
 print(expanded_ips)
+
 
