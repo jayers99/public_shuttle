@@ -1,28 +1,36 @@
 import ipaddress
 
-def get_host_ips(cidr_block):
-    """
-    Returns a list of valid host IP addresses for a given CIDR block.
-    
-    Parameters:
-    - cidr_block (str): The CIDR notation of the IP address block, e.g., '192.168.1.0/24'.
-    
-    Returns:
-    - List[str]: A list of valid host IP addresses in the CIDR block.
-    """
-    try:
-        # Create an IPv4 network object
-        network = ipaddress.ip_network(cidr_block, strict=False)
-        # Get the list of all valid host addresses
-        host_ips = [str(ip) for ip in network.hosts()]
-        return host_ips
-    except ValueError as e:
-        # Handle invalid CIDR block input
-        print(f"Invalid CIDR block: {e}")
-        return []
+def expand_cidr_to_ips(input_string):
+    # Split the input string by newlines to process each line separately
+    lines = input_string.strip().split('\n')
+    result = []
 
-# Example usage
-cidr_block = '192.168.1.0/24'
-host_ips = get_host_ips(cidr_block)
-print(f"Valid host IPs in {cidr_block}:")
-print(host_ips)
+    for line in lines:
+        line = line.strip()  # Remove any leading/trailing whitespace
+        try:
+            # Try to parse the line as an IPv4 network
+            network = ipaddress.ip_network(line, strict=False)
+            # Check if the network is a single address or a range
+            if network.num_addresses > 1:
+                # If it's a range, iterate over each host IP
+                for ip in network.hosts():
+                    result.append(str(ip))
+            else:
+                # If it's a single address, just add it to the result
+                result.append(str(network.network_address))
+        except ValueError:
+            # If it's not a valid IP or CIDR, ignore the line (or handle error)
+            print(f"Invalid IP or CIDR notation: {line} ({e})")
+            continue
+
+    # Join the result list into a single string with newline separation
+    return '\n'.join(result)
+
+# Example usage:
+input_data = """192.168.1.1
+192.168.1.0/30
+10.0.0.0/29
+172.16.5.4"""
+
+expanded_ips = expand_cidr_to_ips(input_data)
+print(expanded_ips)
