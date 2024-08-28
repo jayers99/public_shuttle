@@ -9,6 +9,12 @@ fi
 # Set the project name from the first CLI parameter
 PROJECT_NAME=$1
 
+# Check if the project directory already exists
+if [ -d "$PROJECT_NAME" ]; then
+  echo "Error: Directory '$PROJECT_NAME' already exists."
+  exit 1
+fi
+
 # Create the project directory
 mkdir $PROJECT_NAME
 cd $PROJECT_NAME || exit
