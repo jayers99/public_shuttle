@@ -118,6 +118,12 @@ __pypackages__/
 *.env
 EOL
 
+# Initialize a new git repository
+git init
+git add .
+git commit -m "Initial project setup with directory structure, pipenv, and .gitignore"
+
 # Output a message to indicate setup completion
 echo "Project $PROJECT_NAME has been scaffolded with pipenv and Python 3.9!"
 echo ".gitignore file has been created!"
+echo "Git repository initialized and initial commit made."
