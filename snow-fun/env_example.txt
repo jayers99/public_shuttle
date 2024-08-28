@@ -1,0 +1,3 @@
+SERVICENOW_INSTANCE_URL=https://yourinstance.service-now.com
+SERVICENOW_USERNAME=your_username
+SERVICENOW_PASSWORD=your_password
