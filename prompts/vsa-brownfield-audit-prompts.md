@@ -4,7 +4,7 @@ Copy-pasteable prompts for auditing an existing Python CLI against the architect
 
 Each prompt is self-contained: give it to an agent with read access to the target repo. Prompts are ordered from cheapest/highest-signal to deepest. Run them in sequence or in parallel — they share no state.
 
-**How to use:** run each prompt with the agent's working directory set to the target repo — the prompts operate on the current repository (CWD). Each prompt writes its output to a file under `.audit/` in the repo (create the directory if it doesn't exist). Do **not** summarize the output in chat — only report the path written and a one-line status.
+**How to use:** run each prompt with the agent's working directory set to the target repo — the prompts operate on the current repository (CWD). Each prompt writes its output to a file under `./docs/ax_arch_audit/` in the repo (create the directory if it doesn't exist). Do **not** summarize the output in chat — only report the path written and a one-line status.
 
 ---
 
@@ -24,7 +24,7 @@ Report the following, with file paths and line counts as evidence:
 5. **Test layout:** co-located with features vs. centralized `tests/`; ratio of test files to source files.
 6. **Dependency manager:** `uv`, Poetry, pip-tools, bare `requirements.txt`. Whether lockfile is committed.
 
-**Output contract:** write a single Markdown document with the six sections above to `.audit/01-snapshot.md` (create `.audit/` if missing; overwrite if it exists). No recommendations. No prose outside the sections. In chat, reply only with the path written and a one-line status.
+**Output contract:** write a single Markdown document with the six sections above to `./docs/ax_arch_audit/01-snapshot.md` (create `./docs/ax_arch_audit/` if missing; overwrite if it exists). No recommendations. No prose outside the sections. In chat, reply only with the path written and a one-line status.
 ```
 
 ---
@@ -42,7 +42,7 @@ Method:
 4. Compute **Locality Index Lᵢ = 1 / (files × max_depth)** for each command.
 5. Flag any command where FLS < 0.5 or Lᵢ < 0.1 — these are the high-cost-to-modify surfaces.
 
-**Output contract:** write the full result to `.audit/02-vertical-slice.md` — a table with columns `command | files_touched | directories_touched | max_depth | FLS | Lᵢ | verdict`, ending with a 3-sentence diagnosis (vertical-slice, horizontal-layer, or mixed). In chat, reply only with the path written and a one-line status.
+**Output contract:** write the full result to `./docs/ax_arch_audit/02-vertical-slice.md` — a table with columns `command | files_touched | directories_touched | max_depth | FLS | Lᵢ | verdict`, ending with a 3-sentence diagnosis (vertical-slice, horizontal-layer, or mixed). In chat, reply only with the path written and a one-line status.
 ```
 
 ---
@@ -60,7 +60,7 @@ Audit the current repository (working directory) and answer:
 4. List every handler that **bypasses** the pipeline (direct `print`, direct `boto3.client(...)`, bare `try/except`, ad-hoc `logging.getLogger`, direct env-var reads inside handlers).
 5. List every place cross-cutting concerns are **re-implemented** locally (per-command retry loops, per-command logging setup, per-command auth).
 
-**Output contract:** write the full result to `.audit/03-governance-kernel.md` — the five numbered sections above, followed by a one-line verdict: `KERNEL_PRESENT_AND_ENFORCED | KERNEL_PRESENT_BUT_BYPASSABLE | NO_KERNEL`. In chat, reply only with the path written and the verdict.
+**Output contract:** write the full result to `./docs/ax_arch_audit/03-governance-kernel.md` — the five numbered sections above, followed by a one-line verdict: `KERNEL_PRESENT_AND_ENFORCED | KERNEL_PRESENT_BUT_BYPASSABLE | NO_KERNEL`. In chat, reply only with the path written and the verdict.
 ```
 
 ---
@@ -77,7 +77,7 @@ Scan the current repository (working directory) for the six anti-patterns that d
 5. **Manual error handling inside feature code** — `try/except` blocks in handlers that should be delegated to the kernel. Evidence: count per handler file.
 6. **Deep command hierarchies (>3 levels)** — e.g. `cli foo bar baz qux`. Evidence: list offenders.
 
-**Output contract:** write the result to `.audit/04-anti-patterns.md` — one table with columns `anti_pattern | present | severity | evidence_paths | notes`. No remediation suggestions. In chat, reply only with the path written and a one-line status.
+**Output contract:** write the result to `./docs/ax_arch_audit/04-anti-patterns.md` — one table with columns `anti_pattern | present | severity | evidence_paths | notes`. No remediation suggestions. In chat, reply only with the path written and a one-line status.
 ```
 
 ---
@@ -94,7 +94,7 @@ The deep research identified four reproducible agentic failure modes. Score the 
 
 For each, cite at least two concrete file:line evidence points.
 
-**Output contract:** write the result to `.audit/05-failure-modes.md` — four sections, each with `score`, `evidence`, and a single-sentence rationale. End with an overall risk rating `GREEN | YELLOW | RED`. In chat, reply only with the path written and the rating.
+**Output contract:** write the result to `./docs/ax_arch_audit/05-failure-modes.md` — four sections, each with `score`, `evidence`, and a single-sentence rationale. End with an overall risk rating `GREEN | YELLOW | RED`. In chat, reply only with the path written and the rating.
 ```
 
 ---
@@ -112,7 +112,7 @@ Audit the current repository (working directory):
 4. Are plans / specs versioned in-repo, or only in Slack/Jira/Notion? Evidence.
 5. Is `README.md` addressed to humans, agents, or both? Quote the first 200 words.
 
-**Output contract:** write the result to `.audit/06-agent-memory.md` — a 5-row table `artifact | status | path | notes`, followed by a 2-sentence verdict on repository-as-record maturity. In chat, reply only with the path written and a one-line status.
+**Output contract:** write the result to `./docs/ax_arch_audit/06-agent-memory.md` — a 5-row table `artifact | status | path | notes`, followed by a 2-sentence verdict on repository-as-record maturity. In chat, reply only with the path written and a one-line status.
 ```
 
 ---
@@ -128,7 +128,7 @@ Simulate adding a new feature to the current repository (working directory). Pic
 
 Report the **Touch Point Count** and compare to the target (≤ 5 total, with ≤ 1 modification outside the new feature directory).
 
-**Output contract:** write the result to `.audit/07-touch-points.md` — two ordered lists (created, modified) with justifications, a total count, and a one-line verdict: `MEETS_TARGET | EXCEEDS_TARGET_BY_N`. In chat, reply only with the path written and the verdict.
+**Output contract:** write the result to `./docs/ax_arch_audit/07-touch-points.md` — two ordered lists (created, modified) with justifications, a total count, and a one-line verdict: `MEETS_TARGET | EXCEEDS_TARGET_BY_N`. In chat, reply only with the path written and the verdict.
 ```
 
 ---
@@ -136,7 +136,7 @@ Report the **Touch Point Count** and compare to the target (≤ 5 total, with �
 ## Prompt 8 — Consolidated Audit Report
 
 ```text
-Read the outputs of Prompts 1–7 from `.audit/01-snapshot.md` through `.audit/07-touch-points.md` in the current repository. Produce a single **Brownfield Audit Report** with:
+Read the outputs of Prompts 1–7 from `./docs/ax_arch_audit/01-snapshot.md` through `./docs/ax_arch_audit/07-touch-points.md` in the current repository. Produce a single **Brownfield Audit Report** with:
 
 1. **Executive summary** (5 bullets, non-technical).
 2. **KPI scorecard:** FLS, mean Lᵢ, Governance Coverage %, MFRET (estimate), Touch Points for typical feature, Command Depth. Mark each `GREEN / YELLOW / RED` vs. targets from the synthesis doc.
@@ -144,7 +144,7 @@ Read the outputs of Prompts 1–7 from `.audit/01-snapshot.md` through `.audit/0
 4. **Migration-order recommendation** — which of the four failure modes to address first, and why, given this repo's specifics. Do **not** prescribe tooling (out of scope).
 5. **Open questions for the maintainer** — anything that requires human judgment before migration can proceed.
 
-**Output contract:** write the full report to `.audit/08-report.md` — the five sections above, ≤ 1500 words total, with every claim linked to evidence from `.audit/01-..07-`. In chat, reply only with the path written and the overall RAG rating from the KPI scorecard.
+**Output contract:** write the full report to `./docs/ax_arch_audit/08-report.md` — the five sections above, ≤ 1500 words total, with every claim linked to evidence from `./docs/ax_arch_audit/01-..07-`. In chat, reply only with the path written and the overall RAG rating from the KPI scorecard.
 ```
 
 ---
