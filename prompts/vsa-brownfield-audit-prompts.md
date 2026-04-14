@@ -4,14 +4,14 @@ Copy-pasteable prompts for auditing an existing Python CLI against the architect
 
 Each prompt is self-contained: give it to an agent with read access to the target repo. Prompts are ordered from cheapest/highest-signal to deepest. Run them in sequence or in parallel — they share no state.
 
-**How to use:** replace `<REPO>` with the repo name/path. Each prompt ends with an explicit output contract so results are comparable across runs and across repos.
+**How to use:** run each prompt with the agent's working directory set to the target repo — the prompts operate on the current repository (CWD). Each prompt writes its output to a file under `.audit/` in the repo (create the directory if it doesn't exist). Do **not** summarize the output in chat — only report the path written and a one-line status.
 
 ---
 
 ## Prompt 1 — Repository Snapshot & Agent-Legibility Baseline
 
 ```text
-You are auditing the Python CLI repository `<REPO>` for **agent legibility** — the property that an AI coding agent with a ~200k-token context window can navigate, modify, and verify the system without losing coherence.
+You are auditing the Python CLI repository the current repository (working directory) for **agent legibility** — the property that an AI coding agent with a ~200k-token context window can navigate, modify, and verify the system without losing coherence.
 
 Do **not** propose changes. Produce a factual snapshot only.
 
@@ -24,7 +24,7 @@ Report the following, with file paths and line counts as evidence:
 5. **Test layout:** co-located with features vs. centralized `tests/`; ratio of test files to source files.
 6. **Dependency manager:** `uv`, Poetry, pip-tools, bare `requirements.txt`. Whether lockfile is committed.
 
-**Output contract:** a single Markdown document with the six sections above. No recommendations. No prose outside the sections.
+**Output contract:** write a single Markdown document with the six sections above to `.audit/01-snapshot.md` (create `.audit/` if missing; overwrite if it exists). No recommendations. No prose outside the sections. In chat, reply only with the path written and a one-line status.
 ```
 
 ---
@@ -32,7 +32,7 @@ Report the following, with file paths and line counts as evidence:
 ## Prompt 2 — Vertical Slice vs. Horizontal Layer Diagnosis
 
 ```text
-Audit `<REPO>` to determine whether it is organized by **vertical slices** (one directory per feature containing handler + models + tests) or **horizontal layers** (`services/`, `models/`, `utils/`, `commands/` split across the tree).
+Audit the current repository (working directory) to determine whether it is organized by **vertical slices** (one directory per feature containing handler + models + tests) or **horizontal layers** (`services/`, `models/`, `utils/`, `commands/` split across the tree).
 
 Method:
 
@@ -42,7 +42,7 @@ Method:
 4. Compute **Locality Index Lᵢ = 1 / (files × max_depth)** for each command.
 5. Flag any command where FLS < 0.5 or Lᵢ < 0.1 — these are the high-cost-to-modify surfaces.
 
-**Output contract:** a table with columns `command | files_touched | directories_touched | max_depth | FLS | Lᵢ | verdict`. End with a 3-sentence diagnosis: is this repo vertical-slice, horizontal-layer, or mixed?
+**Output contract:** write the full result to `.audit/02-vertical-slice.md` — a table with columns `command | files_touched | directories_touched | max_depth | FLS | Lᵢ | verdict`, ending with a 3-sentence diagnosis (vertical-slice, horizontal-layer, or mixed). In chat, reply only with the path written and a one-line status.
 ```
 
 ---
@@ -52,7 +52,7 @@ Method:
 ```text
 In an agent-first CLI, cross-cutting concerns (auth, logging, evidence capture, idempotency, retries, error policy) must flow through a **single non-bypassable pipeline** — an "ActionRunner" / "Governance Kernel" / "Base Command". Feature code must not re-implement or bypass it.
 
-Audit `<REPO>` and answer:
+Audit the current repository (working directory) and answer:
 
 1. Does a single governance pipeline exist? Name the file and class/function.
 2. What concerns does it cover? (auth, structured logging, audit/evidence emission, retries, timeouts, idempotency keys, error normalization, config loading)
@@ -60,7 +60,7 @@ Audit `<REPO>` and answer:
 4. List every handler that **bypasses** the pipeline (direct `print`, direct `boto3.client(...)`, bare `try/except`, ad-hoc `logging.getLogger`, direct env-var reads inside handlers).
 5. List every place cross-cutting concerns are **re-implemented** locally (per-command retry loops, per-command logging setup, per-command auth).
 
-**Output contract:** the four numbered sections above, followed by a one-line verdict: `KERNEL_PRESENT_AND_ENFORCED | KERNEL_PRESENT_BUT_BYPASSABLE | NO_KERNEL`.
+**Output contract:** write the full result to `.audit/03-governance-kernel.md` — the five numbered sections above, followed by a one-line verdict: `KERNEL_PRESENT_AND_ENFORCED | KERNEL_PRESENT_BUT_BYPASSABLE | NO_KERNEL`. In chat, reply only with the path written and the verdict.
 ```
 
 ---
@@ -68,7 +68,7 @@ Audit `<REPO>` and answer:
 ## Prompt 4 — Canonical Anti-Pattern Sweep
 
 ```text
-Scan `<REPO>` for the six anti-patterns that deep research identified as agent-hostile. For each, report **present / absent**, file paths, and severity (`blocker | high | medium | low`):
+Scan the current repository (working directory) for the six anti-patterns that deep research identified as agent-hostile. For each, report **present / absent**, file paths, and severity (`blocker | high | medium | low`):
 
 1. **Centralized command registry** — a single `main.py` / `cli.py` switchboard that must be edited for every new feature (causes dropped wiring). Evidence: length of the dispatch block, number of `if/elif` or `add_command` calls.
 2. **`utils/` or `common/` junk drawer** — a catch-all module with unrelated helpers. Evidence: file list, top-3 most-imported helpers, whether contents are cohesive.
@@ -77,7 +77,7 @@ Scan `<REPO>` for the six anti-patterns that deep research identified as agent-h
 5. **Manual error handling inside feature code** — `try/except` blocks in handlers that should be delegated to the kernel. Evidence: count per handler file.
 6. **Deep command hierarchies (>3 levels)** — e.g. `cli foo bar baz qux`. Evidence: list offenders.
 
-**Output contract:** one table with columns `anti_pattern | present | severity | evidence_paths | notes`. No remediation suggestions.
+**Output contract:** write the result to `.audit/04-anti-patterns.md` — one table with columns `anti_pattern | present | severity | evidence_paths | notes`. No remediation suggestions. In chat, reply only with the path written and a one-line status.
 ```
 
 ---
@@ -85,7 +85,7 @@ Scan `<REPO>` for the six anti-patterns that deep research identified as agent-h
 ## Prompt 5 — Failure-Mode Risk Assessment
 
 ```text
-The deep research identified four reproducible agentic failure modes. Score `<REPO>` on each with evidence, on a scale `low | medium | high`:
+The deep research identified four reproducible agentic failure modes. Score the current repository (working directory) on each with evidence, on a scale `low | medium | high`:
 
 1. **Dropped wiring** — new feature code that never gets registered because the central registry is fragile. Look for: manual registration lists, missing tests that assert the command is discoverable.
 2. **Dropped cross-cutting** — agents forgetting to add logging/auth/evidence when copying a handler. Look for: kernel bypass, inconsistent concern coverage across handlers (see Prompt 3).
@@ -94,7 +94,7 @@ The deep research identified four reproducible agentic failure modes. Score `<RE
 
 For each, cite at least two concrete file:line evidence points.
 
-**Output contract:** four sections, each with `score`, `evidence`, and a single-sentence rationale. End with an overall risk rating `GREEN | YELLOW | RED`.
+**Output contract:** write the result to `.audit/05-failure-modes.md` — four sections, each with `score`, `evidence`, and a single-sentence rationale. End with an overall risk rating `GREEN | YELLOW | RED`. In chat, reply only with the path written and the rating.
 ```
 
 ---
@@ -104,7 +104,7 @@ For each, cite at least two concrete file:line evidence points.
 ```text
 An agent-first repo treats the repository itself as the system of record: ADRs, rules, plans, and learnings live in-tree as versioned Markdown.
 
-Audit `<REPO>`:
+Audit the current repository (working directory):
 
 1. Does `AGENTS.md` (or equivalent root entry point) exist? If yes, does it point to the rest of the agent memory? Score `present | stub | missing`.
 2. Are there ADRs (`docs/adr/`, `docs/decisions/`, etc.)? Count and list the 5 most recent.
@@ -112,7 +112,7 @@ Audit `<REPO>`:
 4. Are plans / specs versioned in-repo, or only in Slack/Jira/Notion? Evidence.
 5. Is `README.md` addressed to humans, agents, or both? Quote the first 200 words.
 
-**Output contract:** a 5-row table `artifact | status | path | notes`, followed by a 2-sentence verdict on repository-as-record maturity.
+**Output contract:** write the result to `.audit/06-agent-memory.md` — a 5-row table `artifact | status | path | notes`, followed by a 2-sentence verdict on repository-as-record maturity. In chat, reply only with the path written and a one-line status.
 ```
 
 ---
@@ -120,7 +120,7 @@ Audit `<REPO>`:
 ## Prompt 7 — Feature-Addition Touch-Point Simulation
 
 ```text
-Simulate adding a new feature to `<REPO>` called `<NEW_FEATURE>` (a realistic one — ask if unsure). Do **not** write the code. Instead, enumerate **every file** that would need to be created or modified, in order:
+Simulate adding a new feature to the current repository (working directory). Pick a realistic feature based on the repo's domain — ask the user if unsure. Do **not** write the code. Instead, enumerate **every file** that would need to be created or modified, in order:
 
 1. New files (handler, models, tests, docs).
 2. Existing files modified (CLI registry, `__init__.py`, config schema, shared types, docstrings, integration test manifests, etc.).
@@ -128,7 +128,7 @@ Simulate adding a new feature to `<REPO>` called `<NEW_FEATURE>` (a realistic on
 
 Report the **Touch Point Count** and compare to the target (≤ 5 total, with ≤ 1 modification outside the new feature directory).
 
-**Output contract:** two ordered lists (created, modified) with justifications, a total count, and a one-line verdict: `MEETS_TARGET | EXCEEDS_TARGET_BY_N`.
+**Output contract:** write the result to `.audit/07-touch-points.md` — two ordered lists (created, modified) with justifications, a total count, and a one-line verdict: `MEETS_TARGET | EXCEEDS_TARGET_BY_N`. In chat, reply only with the path written and the verdict.
 ```
 
 ---
@@ -136,7 +136,7 @@ Report the **Touch Point Count** and compare to the target (≤ 5 total, with �
 ## Prompt 8 — Consolidated Audit Report
 
 ```text
-Given the outputs of Prompts 1–7 for `<REPO>` (provided below or attached), produce a single **Brownfield Audit Report** with:
+Read the outputs of Prompts 1–7 from `.audit/01-snapshot.md` through `.audit/07-touch-points.md` in the current repository. Produce a single **Brownfield Audit Report** with:
 
 1. **Executive summary** (5 bullets, non-technical).
 2. **KPI scorecard:** FLS, mean Lᵢ, Governance Coverage %, MFRET (estimate), Touch Points for typical feature, Command Depth. Mark each `GREEN / YELLOW / RED` vs. targets from the synthesis doc.
@@ -144,7 +144,7 @@ Given the outputs of Prompts 1–7 for `<REPO>` (provided below or attached), pr
 4. **Migration-order recommendation** — which of the four failure modes to address first, and why, given this repo's specifics. Do **not** prescribe tooling (out of scope).
 5. **Open questions for the maintainer** — anything that requires human judgment before migration can proceed.
 
-**Output contract:** the five sections above, ≤ 1500 words total. Link every claim to evidence from Prompts 1–7.
+**Output contract:** write the full report to `.audit/08-report.md` — the five sections above, ≤ 1500 words total, with every claim linked to evidence from `.audit/01-..07-`. In chat, reply only with the path written and the overall RAG rating from the KPI scorecard.
 ```
 
 ---
