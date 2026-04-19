@@ -98,7 +98,7 @@ Execute in order. Every finding needs a `file:line` citation or a concrete metri
 
 3. **Agent-context scaffolding audit.** Presence and LOC of: `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.sdlc/`, `.github/agents/`, `SKILL.md`, `.cursorrules`, nested `CLAUDE.md` per module. Grade quality: generic platitudes vs. trigger-action rules; presence of explicit negatives; use of information-dense keywords. Is the instruction hierarchy layered or monolithic?
 
-4. **Spec-driven gates.** `specs/`, `.kiro/`, `memory/constitution.md`, `*.feature`, EARS-formatted acceptance criteria? Sample 5 recent feature PRs: was there a spec artifact at merge time? Did the tests encode the spec, or merely mirror the implementation?
+4. **Spec-driven gates.** Look for spec and plan artifacts in any of: `project-planning/`, `docs/superpowers/specs/`, `docs/superpowers/plans/`, `specs/`, `.kiro/`, `memory/constitution.md`, `*.feature`, plus EARS-formatted acceptance criteria anywhere in-tree. (Superpowers-plugin convention: design docs under `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`, implementation plans under `docs/superpowers/plans/YYYY-MM-DD-<feature>.md`.) Sample 5 recent feature PRs: was there a spec or plan artifact at merge time? Did the tests encode the spec, or merely mirror the implementation?
 
 5. **ADRs & decision memory.** `docs/adr/` or `decisions/` present? Prose or machine-parseable? Any architectural-fitness layer (`import-linter`, contract tests, custom checks)?
 
