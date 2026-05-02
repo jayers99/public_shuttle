@@ -1,0 +1,24 @@
+export PATH="$HOME/bin:$HOME/scripts:$PATH"
+
+export ARCHFLAGS="-arch $(uname -m)"
+
+# Praxis workspace CLIs
+
+# uv - Python version and package manager
+export PATH="$HOME/.local/bin:$PATH"
+
+# ripgrep - config file path
+export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
+
+# bat - syntax-highlighted man pages
+
+# eza - config dir (avoids macOS default ~/Library/Application Support/eza)
+
+# gtime - default format for GNU time
+
+
+# fzf - use fd for faster, .gitignore-aware searching
+# Ctrl-T: file search with bat preview
+# Alt-C: directory jump with tree preview
+# Ctrl-R: history search with preview
+

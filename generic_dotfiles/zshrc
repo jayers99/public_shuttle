@@ -1,0 +1,215 @@
+
+
+
+
+HISTSIZE=50000
+SAVEHIST=50000
+setopt HIST_IGNORE_ALL_DUPS   # remove older duplicate entries
+setopt HIST_IGNORE_SPACE      # ignore commands prefixed with a space
+setopt HIST_REDUCE_BLANKS     # trim unnecessary whitespace
+setopt SHARE_HISTORY          # share history across sessions
+HISTORY_IGNORE="(hist|ls|ll|la|cd|pwd|exit|cl|clear|cd ..)"
+
+source $HOME/.zaliases
+
+# less — syntax highlighting and better defaults
+export LESS=" -R "
+alias less='less -x4 -m -N -g -i -J --underline-special --SILENT'
+alias more='less'
+
+ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern cursor)
+ZSH_HIGHLIGHT_MAXLENGTH=512
+ZSH_HIGHLIGHT_STYLES[globbing]='fg=cyan'
+ZSH_HIGHLIGHT_STYLES[command]='fg=green,bold'
+ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=red,bold'
+ZSH_HIGHLIGHT_STYLES[path]='fg=cyan,underline'
+typeset -A ZSH_HIGHLIGHT_PATTERNS
+ZSH_HIGHLIGHT_PATTERNS+=('rm -rf *' 'fg=white,bold,bg=red')
+ZSH_HIGHLIGHT_PATTERNS+=('sudo ' 'fg=white,bold,bg=red')
+
+HISTORY_SUBSTRING_SEARCH_FUZZY=1
+HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
+HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='bg=magenta,fg=white,bold'
+HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_NOT_FOUND='bg=red,fg=white,bold'
+
+# uv - shell completion
+
+# fzf - key bindings (Ctrl-T, Ctrl-R, Alt-C) and tab completion
+
+# kubectl - shell completion
+
+# zoxide - smart cd (must come after fzf for zi interactive mode)
+
+# autosuggestions last — it wraps widgets so must come after fzf/completions
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+ZSH_AUTOSUGGEST_USE_ASYNC=1
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=244"
+
+[ -f "$HOME/.iterm2_shell_integration.zsh" ] && source "$HOME/.iterm2_shell_integration.zsh"
+
+#---------------------------------------------------------------------
+# functions
+#---------------------------------------------------------------------
+f() {
+  local sel
+  sel=$(fd . ~ --no-ignore-vcs --type f | fzf --scheme=path) || return
+  if [[ -z "$1" ]]; then
+    open "$sel"
+  elif [[ "$1" == *'{}'* ]]; then
+    eval "${@//\{\}/\"$sel\"}"
+  else
+    "$@" "$sel"
+  fi
+}
+
+d() {
+  local sel
+  sel=$(fd . ~ --no-ignore-vcs --type d | fzf --scheme=path) || return
+  if [[ -z "$1" ]]; then
+    cd "$sel"
+  elif [[ "$1" == *'{}'* ]]; then
+    eval "${@//\{\}/\"$sel\"}"
+  else
+    "$@" "$sel"
+  fi
+}
+
+snipit() {
+  [ -n "${1}" ] && snip_file="${1}" || snip_file='snippets.sh'
+  echo "" >> "$snip_file"
+  read "?Enter comment: " comment
+  [ -n "${comment}" ] && echo "# ${comment}" >> "$snip_file"
+  fc -ln -1 | gsed '1s/^[[:space:]]*//' >> "$snip_file"
+  [ -n "${comment}" ] && tail -n 2 "$snip_file" || tail -n 1 "$snip_file"
+}
+
+
+# GitHub MCP auth — reads from gh keyring, no biometric prompt
+
+_leaf_tab_title() { print -Pn "\e]1;%1~\a" }
+precmd_functions+=(_leaf_tab_title)
+
+
+#---------------------------------------------------------------------
+# Vendored prompt theme (was oh-my-zsh themes/jayers.zsh-theme)
+# omz isn't installed here, so the theme is inlined. `colors` is a
+# built-in zsh autoload (not omz-specific) that defines $fg[],
+# $fg_bold[], and $reset_color used below.
+#---------------------------------------------------------------------
+autoload -U colors && colors
+setopt PROMPT_SUBST
+
+jayers_git_prompt() {
+    local dir="${PWD}"
+    local git_dir
+    git_dir=$(command git -C "$dir" rev-parse --git-dir 2>/dev/null) || return
+    case "$git_dir" in
+        /*) ;;
+        *) git_dir="$dir/$git_dir" ;;
+    esac
+
+    local status_output
+    status_output=$(command git -C "$dir" status --porcelain=v2 --branch --untracked-files=normal 2>/dev/null) || return
+
+    local branch="" ahead=0 behind=0 detached=""
+    local has_staged=0 has_unstaged=0 has_untracked=0
+    local line xy ab
+    while IFS= read -r line; do
+        case "$line" in
+            "# branch.head "*)
+                branch="${line#\# branch.head }"
+                [[ "$branch" == "(detached)" ]] && detached=1
+                ;;
+            "# branch.ab "*)
+                ab="${line#\# branch.ab }"
+                ahead="${ab#+}"
+                ahead="${ahead%% *}"
+                behind="${ab##*-}"
+                ;;
+            "1 "*|"2 "*)
+                xy="${line[3,4]}"
+                [[ "${xy[1]}" != "." ]] && has_staged=1
+                [[ "${xy[2]}" != "." ]] && has_unstaged=1
+                ;;
+            "u "*)
+                has_unstaged=1
+                ;;
+            "? "*)
+                has_untracked=1
+                ;;
+        esac
+    done <<< "$status_output"
+
+    if [[ -n "$detached" ]]; then
+        local sha
+        sha=$(command git -C "$dir" rev-parse --short=7 HEAD 2>/dev/null)
+        branch="HEAD@${sha}"
+    elif (( ${#branch} > 25 )); then
+        branch="${branch[1,24]}…"
+    fi
+
+    local state=""
+    if [[ -d "$git_dir/rebase-merge" ]]; then
+        local msgnum end
+        msgnum=$(cat "$git_dir/rebase-merge/msgnum" 2>/dev/null)
+        end=$(cat "$git_dir/rebase-merge/end" 2>/dev/null)
+        if [[ -n "$msgnum" && -n "$end" ]]; then
+            state="|REBASE ${msgnum}/${end}"
+        else
+            state="|REBASE"
+        fi
+    elif [[ -d "$git_dir/rebase-apply" ]]; then
+        local next last
+        next=$(cat "$git_dir/rebase-apply/next" 2>/dev/null)
+        last=$(cat "$git_dir/rebase-apply/last" 2>/dev/null)
+        if [[ -n "$next" && -n "$last" ]]; then
+            state="|REBASE ${next}/${last}"
+        else
+            state="|REBASE"
+        fi
+    elif [[ -f "$git_dir/MERGE_HEAD" ]]; then
+        state="|MERGING"
+    elif [[ -f "$git_dir/CHERRY_PICK_HEAD" ]]; then
+        state="|CHERRY-PICK"
+    elif [[ -f "$git_dir/REVERT_HEAD" ]]; then
+        state="|REVERTING"
+    elif [[ -f "$git_dir/BISECT_LOG" ]]; then
+        state="|BISECTING"
+    fi
+
+    local stash_count
+    stash_count=$(command git -C "$dir" rev-list --walk-reflogs --count refs/stash 2>/dev/null)
+    stash_count=${stash_count:-0}
+
+    local out=" %{$fg[blue]%}("
+    if [[ -n "$detached" ]]; then
+        out+="%{$fg[yellow]%}${branch}%{$fg[blue]%}"
+    else
+        out+="%{$fg[green]%}${branch}%{$fg[blue]%}"
+    fi
+    [[ -n "$state" ]] && out+="%{$fg[red]%}${state}%{$fg[blue]%}"
+    if (( ahead > 0 && behind > 0 )); then
+        out+="%{$fg[yellow]%}↑${ahead}↓${behind}%{$fg[blue]%}"
+    elif (( ahead > 0 )); then
+        out+="%{$fg[green]%}↑${ahead}%{$fg[blue]%}"
+    elif (( behind > 0 )); then
+        out+="%{$fg[yellow]%}↓${behind}%{$fg[blue]%}"
+    fi
+    out+=")%{$reset_color%}"
+    (( has_staged )) && out+="%{$fg[green]%}+%{$reset_color%}"
+    (( has_unstaged )) && out+="%{$fg[red]%}*%{$reset_color%}"
+    (( has_untracked )) && out+="%{$fg[yellow]%}?%{$reset_color%}"
+    (( stash_count > 0 )) && out+="%{$fg[magenta]%}⚑${stash_count}%{$reset_color%}"
+
+    printf '%s' "$out"
+}
+
+# SSH detection: orange hostname when remote, bold yellow when local
+if [[ -n "$SSH_CONNECTION" ]]; then
+  PROMPT='%B%F{208}%m%f%b:'
+else
+  PROMPT='%{$fg_bold[yellow]%}%m%{$reset_color%}:'
+fi
+PROMPT+='%{$fg[cyan]%}%1~%{$reset_color%}$(jayers_git_prompt)'
+PROMPT+=$'\n%(?.%{$fg[green]%}.%{$fg[red]%})%B%#%b '

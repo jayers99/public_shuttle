@@ -1,0 +1,88 @@
+[core]
+  editor = vim
+  autocrlf = input
+  excludesfile = $HOME/.gitignore_global
+	pager = delta
+	fsmonitor = true
+	untrackedCache = true
+[filter "lfs"]
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
+[user]
+  name = <NAME>
+  email = <EMAIL>
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILPL9VCkxuJqsPhevHUOi6MM4pqbkkWnN2oyz1Ixf7Qt
+[color]
+  ui = true
+[column]
+	ui = auto
+[fetch]
+	prune = true
+	pruneTags = true
+	all = true
+[push]
+  default = current
+	autoSetupRemote = true
+	followTags = true
+[pull]
+  rebase = true
+[rebase]
+	autoSquash = true
+	autoStash = true
+	updateRefs = true
+[rerere]
+  enabled = true
+[alias]
+  s = status -s
+  lg = log --oneline --decorate --all --graph
+  lo = !git --no-pager log --oneline -25
+  gap = !git fetch --all --prune && git --no-pager log --oneline --all --graph \"$(git merge-base HEAD origin/HEAD)^..HEAD\"
+  dlog = "-c diff.external=difft log --ext-diff"
+  dshow = "-c diff.external=difft show --ext-diff"
+  ddiff = "-c diff.external=difft diff"
+[help]
+	autocorrect = prompt
+[init]
+  defaultBranch = main
+[diff]
+  tool = vimdiff
+	algorithm = histogram
+	colorMoved = plain
+	mnemonicPrefix = true
+	renames = true
+[merge]
+  tool = vimdiff
+	conflictStyle = zdiff3
+	autoStash = true
+[interactive]
+	diffFilter = delta --color-only
+[branch]
+	sort = -committerdate
+[tag]
+	sort = -version:refname
+[log]
+	date = iso
+[transfer]
+	fsckObjects = true
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = false
+	hyperlinks = true
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+	verbose = true
+[tag]
+	gpgsign = true
+[difftool "difftastic"]
+	cmd = difft "$LOCAL" "$REMOTE"
+[difftool]
+	prompt = false
+[pager]
+	difftool = true
+[credential]
+	helper = !/opt/homebrew/bin/gh auth git-credential

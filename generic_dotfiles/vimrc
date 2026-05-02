@@ -1,0 +1,62 @@
+" --- Plugins ---
+call plug#begin('~/.vim/plugged')
+Plug 'tomasiser/vim-code-dark'
+Plug 'preservim/nerdtree'
+Plug 'sheerun/vim-polyglot'
+call plug#end()
+
+" --- Colorscheme ---
+if has('termguicolors')
+  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+  set termguicolors
+endif
+syntax enable
+colorscheme codedark
+
+" --- General ---
+filetype plugin indent on
+set backspace=indent,eol,start
+set splitbelow splitright
+set iskeyword+=-
+
+" --- Search ---
+set hlsearch
+set incsearch
+set ignorecase
+set smartcase
+
+" --- Persistent undo ---
+set undofile
+set undodir=~/.vim/undodir
+
+" --- File finding ---
+set path+=**
+set wildmenu
+
+" --- Visible whitespace ---
+set listchars=tab:>-,trail:~,extends:>,precedes:<
+set list
+
+" --- Line numbers ---
+set nu rnu
+set clipboard=unnamed
+
+" --- Tabs / Spaces ---
+set tabstop=2
+set softtabstop=2
+set shiftwidth=2
+set expandtab
+autocmd FileType python setlocal shiftwidth=4 softtabstop=4 expandtab
+autocmd FileType sh setlocal shiftwidth=4 softtabstop=4 expandtab
+
+" --- Formatting ---
+autocmd FileType * setlocal formatoptions-=cro
+
+" --- Filetype overrides ---
+au BufNewFile,BufRead,BufReadPost *.tpl set syntax=JSON
+
+" --- NERDTree ---
+map <C-n> :NERDTreeToggle<CR>
+let NERDTreeMinimalUI = 1
+autocmd BufEnter * if winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | call feedkeys(":quit\<CR>:\<BS>") | endif

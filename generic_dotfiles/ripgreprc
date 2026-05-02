@@ -1,0 +1,22 @@
+# Smart case: case-insensitive unless pattern has uppercase
+--smart-case
+
+# Search hidden files (dotfiles), but skip .git
+--hidden
+--glob=!.git/*
+
+# Truncate long lines in output, show preview
+--max-columns=150
+--max-columns-preview
+
+# Custom file types (type-add and value must be on separate lines)
+--type-add
+web:*.{html,css,js,jsx,ts,tsx}
+--type-add
+config:*.{json,yaml,yml,toml,ini}
+
+# Ignore common noise directories
+--glob=!node_modules/*
+--glob=!.venv/*
+--glob=!__pycache__/*
+--glob=!target/*

@@ -1,0 +1,12 @@
+*.tmp
+*.log
+*.json
+*.tfstate*
+*.jpg
+*.pdf
+.terraform/
+.aws-sam/
+node_modules/
+venv/
+__pycache__/
+*.pyc

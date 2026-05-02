@@ -1,0 +1,20 @@
+// Place your key bindings in this file to override the defaultsauto[]
+[
+    {
+        "key": "cmd+1",
+        "command": "workbench.action.focusActiveEditorGroup"
+    },
+    {
+        "key": "cmd+2",
+        "command": "workbench.action.terminal.focus"
+    },
+    {
+        "key": "cmd+r",
+        "command": "workbench.action.terminal.runSelectedText"
+    },
+    {
+        "key": "cmd+r",
+        "command": "-workbench.action.reloadWindow",
+        "when": "isDevelopment"
+    }
+]
