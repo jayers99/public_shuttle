@@ -3,7 +3,20 @@
 Thumbs.db
 
 # editors
-.vscode
+# Keep team-shared VS Code config
+!.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Ignore personal/local VS Code state
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
 .idea
 *.swp
 *.swo
