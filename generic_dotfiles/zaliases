@@ -1,6 +1,15 @@
 #------------------------------------------------------------------------------
 # Files & directories
 #------------------------------------------------------------------------------
+alias ls='ls -G'
+alias ll='ls -lhG'
+alias la='ls -lahG'
+alias lll='ls -1'
+alias lsf='ls -1d "$PWD"/*'
+alias lt='find . -maxdepth 2 -print'
+alias tree='find . -print'
+alias lS='ls -lhS'
+alias lm='ls -lt'
 alias md='mkdir -p'
 
 #------------------------------------------------------------------------------
@@ -32,14 +41,21 @@ ghprc() { gh repo create "$(basename "$PWD")" --private --add-readme --license M
 #------------------------------------------------------------------------------
 # Docker
 #------------------------------------------------------------------------------
+alias dil='docker image ls --format "{{json .}}" | jq -r '\''. | select((.Repository | contains("k8s")) or (.Repository | contains("docker/")) or (.Repository | contains("buildkit")) | not) | "\(.ID),\(.Repository),\(.Tag),\(.Size)"'\'' | column -t -s, | sort -k 2'
+alias dipl='for i in $(docker image ls --format "{{json .}}" | jq -r '\''. | select(.Tag == "latest") | .Repository'\''); do echo $i; docker image pull $i; done && docker image prune -f'
+alias dit='docker run -u 0 -it -v $PWD:/mnt/pwd --entrypoint /bin/sh --rm'
 
 #------------------------------------------------------------------------------
 # Python
 #------------------------------------------------------------------------------
+alias py="uv run python"
 
 #------------------------------------------------------------------------------
 # Infrastructure
 #------------------------------------------------------------------------------
+alias tf='terraform'
+alias k='kubectl'
+alias ek="eksctl"
 
 #------------------------------------------------------------------------------
 # Claude
